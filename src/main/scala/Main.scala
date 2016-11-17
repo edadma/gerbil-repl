@@ -1,5 +1,7 @@
 package xyz.hyperreal.gerbil_repl
 
+import collection.mutable.ArrayBuffer
+
 import java.io.{File, PrintWriter, FileReader}
 
 import jline.console.ConsoleReader
@@ -24,6 +26,8 @@ object Main extends App {
 	println
 	
 	val env = new Env
+	var stacktrace = false
+	var count = 0
 	
 	while ({line = reader.readLine; line != null}) {
 		val com = line.trim split "\\s+" toList
@@ -41,12 +45,17 @@ object Main extends App {
 					sys.exit
 				case List( "trace"|"t", "on" ) =>
 				case List( "trace"|"t", "off" ) =>
-				case List( "stack"|"s", "on" ) =>
-				case List( "stack"|"s", "off" ) =>
-				case s :: _ if !s.head.isLetter => 
+				case List( "stack"|"s", "on" ) => stacktrace = true
+				case List( "stack"|"s", "off" ) => stacktrace = false
+				case s :: _ if s != "" && !s.head.isLetter => 
 					val res = Gerbil.run( line, env )
+					val name = "res" + number(count)
+					val v = new Variable
 					
-					println( res, res.getClass )
+					v.value = res
+					out.println( name + ": " + res.getClass.getName + " = " + res )
+					env.vars(name) = v
+					count += 1
 				case Nil|List( "" ) =>
 				case _ => out.println( "error interpreting command" )
 			}
@@ -54,11 +63,29 @@ object Main extends App {
 		catch
 		{
 			case e: Exception =>
-//					out.println( e )
-				e.printStackTrace( out )
+				if (stacktrace)
+					e.printStackTrace( out )
+				else
+					out.println( e )
 		}
-			
+		
 		out.println
 	}
 	
+	def number( n: Int ) = {
+		val buf = new StringBuilder
+		var quo = n
+		
+		while (quo > 0) {
+			val rem = quo%26
+			
+			buf += ('a' + rem).toChar
+			quo /= 26
+		}
+		
+		if (buf isEmpty)
+			buf += 'a'
+			
+		buf.reverseIterator.mkString
+	}
 }
