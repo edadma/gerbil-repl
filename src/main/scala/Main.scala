@@ -23,6 +23,8 @@ object Main extends App {
 	""".trim.stripMargin.lines foreach println
 	println
 	
+	val env = new Env
+	
 	while ({line = reader.readLine; line != null}) {
 		val com = line.trim split "\\s+" toList
 			
@@ -42,7 +44,7 @@ object Main extends App {
 				case List( "stack"|"s", "on" ) =>
 				case List( "stack"|"s", "off" ) =>
 				case s :: _ if !s.head.isLetter => 
-					val res = Gerbil.run( line )
+					val res = Gerbil.run( line, env )
 					
 					println( res, res.getClass )
 				case Nil|List( "" ) =>
